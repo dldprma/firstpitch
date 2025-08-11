@@ -274,7 +274,8 @@ export default function RegisterForm() {
                 <Button
                   type="button"
                   variant="secondary"
-                  size="md"
+                  size="sm"
+                  radius="xl"
                   onClick={handleSendVerificationCode}
                   disabled={
                     emailVerification.isVerified || emailVerification.isLoading
@@ -310,7 +311,8 @@ export default function RegisterForm() {
                   <Button
                     type="button"
                     variant="primary"
-                    size="md"
+                    size="sm"
+                    radius="xl"
                     onClick={handleVerifyCode}
                     disabled={emailVerification.isLoading}
                     className="whitespace-nowrap"
@@ -358,10 +360,10 @@ export default function RegisterForm() {
         </fieldset>
 
         {/* Agreements */}
-        <fieldset className="space-y-4">
+        <fieldset className="mt-5 space-y-8">
           <legend className="sr-only">약관 동의</legend>
 
-          <div className="space-y-3">
+          <div className="space-y-2">
             <label className="flex items-start space-x-3 cursor-pointer">
               <input
                 type="checkbox"
@@ -371,13 +373,18 @@ export default function RegisterForm() {
                 required
                 aria-required="true"
               />
-              <span className="text-sm text-gray-700 font-pretendard">
-                <span className="text-red-500">*</span>{" "}
-                <Link href="/terms" className="text-[#5AA60E] hover:underline">
-                  이용약관
-                </Link>
-                에 동의합니다.
-              </span>
+              <div className="flex-1">
+                <span className="text-sm text-gray-700 font-pretendard">
+                  <span className="text-red-500">*</span> 이용약관에 동의합니다.
+                </span>
+                <button
+                  type="button"
+                  onClick={() => window.open("/terms", "_blank")}
+                  className="ml-2 text-xs text-[#5AA60E] hover:underline font-medium"
+                >
+                  [약관 보기]
+                </button>
+              </div>
             </label>
 
             <label className="flex items-start space-x-3 cursor-pointer">
@@ -389,16 +396,19 @@ export default function RegisterForm() {
                 required
                 aria-required="true"
               />
-              <span className="text-sm text-gray-700 font-pretendard">
-                <span className="text-red-500">*</span>{" "}
-                <Link
-                  href="/privacy"
-                  className="text-[#5AA60E] hover:underline"
+              <div className="flex-1">
+                <span className="text-sm text-gray-700 font-pretendard">
+                  <span className="text-red-500">*</span> 개인정보처리방침에
+                  동의합니다.
+                </span>
+                <button
+                  type="button"
+                  onClick={() => window.open("/privacy", "_blank")}
+                  className="ml-2 text-xs text-[#5AA60E] hover:underline font-medium"
                 >
-                  개인정보처리방침
-                </Link>
-                에 동의합니다.
-              </span>
+                  [약관 보기]
+                </button>
+              </div>
             </label>
 
             <label className="flex items-start space-x-3 cursor-pointer">
@@ -408,9 +418,18 @@ export default function RegisterForm() {
                 onChange={() => handleAgreementChange("marketing")}
                 className="mt-1 h-4 w-4 text-[#5AA60E] border-gray-300 rounded focus:ring-[#5AA60E] focus:ring-2"
               />
-              <span className="text-sm text-gray-700 font-pretendard">
-                마케팅 정보 수신에 동의합니다. (선택)
-              </span>
+              <div className="flex-1">
+                <span className="text-sm text-gray-700 font-pretendard">
+                  마케팅 정보 수신에 동의합니다. (선택)
+                </span>
+                <button
+                  type="button"
+                  onClick={() => window.open("/marketing", "_blank")}
+                  className="ml-2 text-xs text-[#5AA60E] hover:underline font-medium"
+                >
+                  [약관 보기]
+                </button>
+              </div>
             </label>
           </div>
         </fieldset>
@@ -428,7 +447,8 @@ export default function RegisterForm() {
         <Button
           type="submit"
           variant="secondary"
-          size="lg"
+          size="md"
+          radius="lg"
           className="w-full py-3"
           disabled={isLoading || !emailVerification.isVerified}
           aria-label="회원가입하기"
