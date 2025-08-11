@@ -1,0 +1,26 @@
+{
+  "name": "FirstPitch",
+  "short_name": "FirstPitch",
+  "description": "야구의 세계에 오신 것을 환영합니다. FirstPitch에서 야구를 배워보세요.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#5AA60E",
+  "orientation": "portrait-primary",
+  "categories": ["education", "sports"],
+  "lang": "ko",
+  "icons": [
+    {
+      "src": "/android-chrome-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/android-chrome-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

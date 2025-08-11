@@ -24,6 +24,7 @@ export default function Hero() {
         <Button
           variant="primary"
           size="lg"
+          href="/tutorial"
           aria-label="야구 입덕 가이드 시작하기"
         >
           지금 시작하기

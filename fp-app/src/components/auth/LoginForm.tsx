@@ -1,44 +1,46 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Button from "@/components/ui/Button";
 import Link from "next/link";
 import { MdOutlineLogin } from "react-icons/md";
 import { FaUser } from "react-icons/fa";
 import { FaLock } from "react-icons/fa";
+import { useAuth } from "@/lib/hooks/useAuth";
+import { LoginRequest } from "@/lib/types/auth";
 
 export default function LoginForm() {
   const router = useRouter();
-  const [formData, setFormData] = useState({
+  const { login, isLoading, error, clearError } = useAuth();
+  const [formData, setFormData] = useState<LoginRequest>({
     username: "",
     password: "",
   });
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState("");
+
+  // 에러가 있을 때 자동으로 에러 메시지 제거
+  useEffect(() => {
+    if (error) {
+      const timer = setTimeout(() => {
+        clearError();
+      }, 5000); // 5초 후 자동으로 에러 메시지 제거
+
+      return () => clearTimeout(timer);
+    }
+  }, [error, clearError]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
-    setError("");
 
     try {
-      // TODO: 실제 로그인 API 호출
-      // const response = await loginAPI(formData);
+      const result = await login(formData);
 
-      // 임시 로그인 로직 (테스트용)
-      if (formData.username && formData.password) {
-        // 로그인 성공 시
-        console.log("로그인 성공:", formData);
-        router.push("/"); // 홈으로 리다이렉트
-      } else {
-        // 로그인 실패 시
-        setError("아이디와 비밀번호를 모두 입력해주세요.");
+      if (!result.success) {
+        // 에러는 useAuth에서 자동으로 처리됨
+        console.error("로그인 실패:", result.error);
       }
     } catch (err) {
-      setError("로그인 중 오류가 발생했습니다. 다시 시도해주세요.");
-    } finally {
-      setIsLoading(false);
+      console.error("로그인 중 예상치 못한 오류:", err);
     }
   };
 
@@ -48,8 +50,11 @@ export default function LoginForm() {
       ...prev,
       [name]: value,
     }));
+
     // 입력 시 에러 메시지 제거
-    if (error) setError("");
+    if (error) {
+      clearError();
+    }
   };
 
   return (

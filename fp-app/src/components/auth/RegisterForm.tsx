@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Button from "@/components/ui/Button";
 import Link from "next/link";
 import {
@@ -9,9 +9,19 @@ import {
   FaLock,
   FaUserPlus,
   FaCheck,
+  FaTimes,
 } from "react-icons/fa";
+import { useAuth } from "@/lib/hooks/useAuth";
+import { RegisterRequest } from "@/lib/types/auth";
+import {
+  sendVerificationCode,
+  verifyEmailCode,
+  checkUsername,
+} from "@/lib/api/auth";
+import { VALIDATION_RULES } from "@/lib/utils/constants";
 
 export default function RegisterForm() {
+  const { register, isLoading, error, clearError } = useAuth();
   const [formData, setFormData] = useState({
     username: "",
     password: "",
@@ -26,8 +36,7 @@ export default function RegisterForm() {
     marketing: false,
   });
 
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState("");
+  const [localError, setLocalError] = useState("");
 
   // 이메일 인증 관련 상태
   const [emailVerification, setEmailVerification] = useState({
@@ -37,12 +46,208 @@ export default function RegisterForm() {
     isLoading: false,
   });
 
+  // 사용자명 중복 확인 상태
+  const [usernameCheck, setUsernameCheck] = useState({
+    isChecking: false,
+    isAvailable: null as boolean | null,
+    message: "",
+  });
+
+  // 닉네임 중복 확인 상태
+  const [nicknameCheck, setNicknameCheck] = useState({
+    isChecking: false,
+    isAvailable: null as boolean | null,
+    message: "",
+  });
+
+  // 비밀번호 유효성 상태
+  const [passwordValidation, setPasswordValidation] = useState({
+    length: false,
+    lowercase: false,
+    number: false,
+    special: false,
+  });
+
+  // 사용자명 유효성 상태
+  const [usernameValidation, setUsernameValidation] = useState({
+    length: false,
+    pattern: false,
+  });
+
+  // 닉네임 유효성 상태
+  const [nicknameValidation, setNicknameValidation] = useState({
+    length: false,
+  });
+
+  // 에러가 있을 때 자동으로 에러 메시지 제거
+  useEffect(() => {
+    if (error) {
+      const timer = setTimeout(() => {
+        clearError();
+      }, 5000); // 5초 후 자동으로 에러 메시지 제거
+
+      return () => clearTimeout(timer);
+    }
+  }, [error, clearError]);
+
+  // 비밀번호 유효성 검사
+  useEffect(() => {
+    const password = formData.password;
+    setPasswordValidation({
+      length: password.length >= VALIDATION_RULES.PASSWORD.MIN_LENGTH,
+      lowercase: /[a-z]/.test(password),
+      number: /\d/.test(password),
+      special: /[!@#$%^&*(),.?":{}|<>]/.test(password),
+    });
+  }, [formData.password]);
+
+  // 사용자명 유효성 검사 및 중복 확인
+  useEffect(() => {
+    const username = formData.username;
+    const isValidLength =
+      username.length >= VALIDATION_RULES.USERNAME.MIN_LENGTH &&
+      username.length <= VALIDATION_RULES.USERNAME.MAX_LENGTH;
+    const isValidPattern = VALIDATION_RULES.USERNAME.PATTERN.test(username);
+
+    setUsernameValidation({
+      length: isValidLength,
+      pattern: isValidPattern,
+    });
+
+    // 유효한 형식일 때만 중복 확인
+    if (isValidLength && isValidPattern && username.length > 0) {
+      const checkUsernameAvailability = async () => {
+        setUsernameCheck({
+          isChecking: true,
+          isAvailable: null,
+          message: "확인 중...",
+        });
+
+        try {
+          const response = await checkUsername(username);
+
+          if (response.success) {
+            if (response.data?.available) {
+              setUsernameCheck({
+                isChecking: false,
+                isAvailable: true,
+                message: "사용 가능한 아이디입니다.",
+              });
+            } else {
+              setUsernameCheck({
+                isChecking: false,
+                isAvailable: false,
+                message: "이미 사용 중인 아이디입니다.",
+              });
+            }
+          } else {
+            setUsernameCheck({
+              isChecking: false,
+              isAvailable: null,
+              message: response.error || "확인에 실패했습니다.",
+            });
+          }
+        } catch (err) {
+          setUsernameCheck({
+            isChecking: false,
+            isAvailable: null,
+            message: "확인 중 오류가 발생했습니다.",
+          });
+        }
+      };
+
+      // 디바운싱 적용 (500ms 후 실행)
+      const timer = setTimeout(checkUsernameAvailability, 500);
+      return () => clearTimeout(timer);
+    } else {
+      // 유효하지 않은 형식이면 중복 확인 상태 초기화
+      setUsernameCheck({
+        isChecking: false,
+        isAvailable: null,
+        message: "",
+      });
+    }
+  }, [formData.username]);
+
+  // 닉네임 유효성 검사 및 중복 확인
+  useEffect(() => {
+    const nickname = formData.nickname;
+    const isValidLength =
+      nickname.length >= VALIDATION_RULES.NICKNAME.MIN_LENGTH &&
+      nickname.length <= VALIDATION_RULES.NICKNAME.MAX_LENGTH;
+
+    setNicknameValidation({
+      length: isValidLength,
+    });
+
+    // 유효한 형식일 때만 중복 확인
+    if (isValidLength && nickname.length > 0) {
+      const checkNicknameAvailability = async () => {
+        setNicknameCheck({
+          isChecking: true,
+          isAvailable: null,
+          message: "확인 중...",
+        });
+
+        try {
+          // 실제로는 별도의 닉네임 중복 확인 API가 필요하지만
+          // 현재는 checkUsername을 사용하여 모의로 처리
+          const response = await checkUsername(nickname);
+
+          if (response.success) {
+            if (response.data?.available) {
+              setNicknameCheck({
+                isChecking: false,
+                isAvailable: true,
+                message: "사용 가능한 닉네임입니다.",
+              });
+            } else {
+              setNicknameCheck({
+                isChecking: false,
+                isAvailable: false,
+                message: "이미 사용 중인 닉네임입니다.",
+              });
+            }
+          } else {
+            setNicknameCheck({
+              isChecking: false,
+              isAvailable: null,
+              message: response.error || "확인에 실패했습니다.",
+            });
+          }
+        } catch (err) {
+          setNicknameCheck({
+            isChecking: false,
+            isAvailable: null,
+            message: "확인 중 오류가 발생했습니다.",
+          });
+        }
+      };
+
+      // 디바운싱 적용 (500ms 후 실행)
+      const timer = setTimeout(checkNicknameAvailability, 500);
+      return () => clearTimeout(timer);
+    } else {
+      // 유효하지 않은 형식이면 중복 확인 상태 초기화
+      setNicknameCheck({
+        isChecking: false,
+        isAvailable: null,
+        message: "",
+      });
+    }
+  }, [formData.nickname]);
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({
       ...prev,
       [name]: value,
     }));
+
+    // 입력 시 로컬 에러 메시지 제거
+    if (localError) {
+      setLocalError("");
+    }
   };
 
   const handleAgreementChange = (name: keyof typeof agreements) => {
@@ -50,29 +255,44 @@ export default function RegisterForm() {
       ...prev,
       [name]: !prev[name],
     }));
+
+    // 약관 변경 시 로컬 에러 메시지 제거
+    if (localError) {
+      setLocalError("");
+    }
   };
 
   // 이메일 인증 코드 전송
   const handleSendVerificationCode = async () => {
     if (!formData.email) {
-      setError("이메일을 먼저 입력해주세요.");
+      setLocalError("이메일을 먼저 입력해주세요.");
+      return;
+    }
+
+    // 이메일 형식 검증
+    if (!VALIDATION_RULES.EMAIL.PATTERN.test(formData.email)) {
+      setLocalError("올바른 이메일 형식을 입력해주세요.");
       return;
     }
 
     setEmailVerification((prev) => ({ ...prev, isLoading: true }));
-    setError("");
+    setLocalError("");
 
     try {
-      // TODO: 실제 API 호출로 변경
-      await new Promise((resolve) => setTimeout(resolve, 1000)); // 모의 API 호출
+      const response = await sendVerificationCode(formData.email);
 
-      setEmailVerification((prev) => ({
-        ...prev,
-        isSent: true,
-        isLoading: false,
-      }));
+      if (response.success) {
+        setEmailVerification((prev) => ({
+          ...prev,
+          isSent: true,
+          isLoading: false,
+        }));
+      } else {
+        setLocalError(response.error || "인증 코드 전송에 실패했습니다.");
+        setEmailVerification((prev) => ({ ...prev, isLoading: false }));
+      }
     } catch (err) {
-      setError("인증 코드 전송에 실패했습니다. 다시 시도해주세요.");
+      setLocalError("인증 코드 전송에 실패했습니다. 다시 시도해주세요.");
       setEmailVerification((prev) => ({ ...prev, isLoading: false }));
     }
   };
@@ -80,32 +300,32 @@ export default function RegisterForm() {
   // 인증 코드 확인
   const handleVerifyCode = async () => {
     if (!emailVerification.code) {
-      setError("인증 코드를 입력해주세요.");
+      setLocalError("인증 코드를 입력해주세요.");
       return;
     }
 
     setEmailVerification((prev) => ({ ...prev, isLoading: true }));
-    setError("");
+    setLocalError("");
 
     try {
-      // TODO: 실제 API 호출로 변경
-      await new Promise((resolve) => setTimeout(resolve, 1000)); // 모의 API 호출
+      const response = await verifyEmailCode(
+        formData.email,
+        emailVerification.code
+      );
 
-      // 간단한 검증 (실제로는 서버에서 검증)
-      if (emailVerification.code === "123456") {
-        // 테스트용 코드
+      if (response.success) {
         setEmailVerification((prev) => ({
           ...prev,
           isVerified: true,
           isLoading: false,
         }));
-        setError("");
+        setLocalError("");
       } else {
-        setError("인증 코드가 일치하지 않습니다.");
+        setLocalError(response.error || "인증 코드가 일치하지 않습니다.");
         setEmailVerification((prev) => ({ ...prev, isLoading: false }));
       }
     } catch (err) {
-      setError("인증 코드 확인에 실패했습니다. 다시 시도해주세요.");
+      setLocalError("인증 코드 확인에 실패했습니다. 다시 시도해주세요.");
       setEmailVerification((prev) => ({ ...prev, isLoading: false }));
     }
   };
@@ -113,36 +333,76 @@ export default function RegisterForm() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    // 사용자명 유효성 검사
+    if (!usernameValidation.length || !usernameValidation.pattern) {
+      setLocalError("사용자명 형식을 확인해주세요.");
+      return;
+    }
+
+    // 사용자명 중복 확인
+    if (usernameCheck.isAvailable !== true) {
+      setLocalError("사용 가능한 아이디를 입력해주세요.");
+      return;
+    }
+
+    // 비밀번호 유효성 검사
+    const isPasswordValid = Object.values(passwordValidation).every(Boolean);
+    if (!isPasswordValid) {
+      setLocalError("비밀번호 요구사항을 모두 충족해주세요.");
+      return;
+    }
+
+    // 닉네임 유효성 검사
+    if (!nicknameValidation.length) {
+      setLocalError("닉네임 형식을 확인해주세요.");
+      return;
+    }
+
+    // 닉네임 중복 확인
+    if (nicknameCheck.isAvailable !== true) {
+      setLocalError("사용 가능한 닉네임을 입력해주세요.");
+      return;
+    }
+
     if (!emailVerification.isVerified) {
-      setError("이메일 인증을 완료해주세요.");
+      setLocalError("이메일 인증을 완료해주세요.");
       return;
     }
 
     if (formData.password !== formData.confirmPassword) {
-      setError("비밀번호가 일치하지 않습니다.");
+      setLocalError("비밀번호가 일치하지 않습니다.");
       return;
     }
 
     if (!agreements.terms || !agreements.privacy) {
-      setError("필수 약관에 동의해주세요.");
+      setLocalError("필수 약관에 동의해주세요.");
       return;
     }
 
-    setIsLoading(true);
-    setError("");
-
     try {
-      // TODO: 실제 회원가입 API 호출
-      await new Promise((resolve) => setTimeout(resolve, 2000));
+      const registerData: RegisterRequest = {
+        username: formData.username,
+        password: formData.password,
+        email: formData.email,
+        nickname: formData.nickname,
+        agreeToTerms: agreements.terms,
+        agreeToPrivacy: agreements.privacy,
+        agreeToMarketing: agreements.marketing,
+      };
 
-      // 성공 시 처리 (예: 로그인 페이지로 이동)
-      console.log("회원가입 성공:", formData);
+      const result = await register(registerData);
+
+      if (!result.success) {
+        // 에러는 useAuth에서 자동으로 처리됨
+        console.error("회원가입 실패:", result.error);
+      }
     } catch (err) {
-      setError("회원가입에 실패했습니다. 다시 시도해주세요.");
-    } finally {
-      setIsLoading(false);
+      console.error("회원가입 중 예상치 못한 오류:", err);
     }
   };
+
+  // 현재 표시할 에러 메시지 (Redux 에러 또는 로컬 에러)
+  const displayError = error || localError;
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6" noValidate>
@@ -170,21 +430,79 @@ export default function RegisterForm() {
             >
               아이디 <span className="text-red-500">*</span>
             </label>
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <FaUser color="#989AAA" />
+            <div className="space-y-2">
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <FaUser color="#989AAA" />
+                </div>
+                <input
+                  type="text"
+                  id="username"
+                  name="username"
+                  value={formData.username}
+                  onChange={handleChange}
+                  className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:ring-0 focus:border-0 transition-colors font-pretendard"
+                  placeholder="아이디를 입력하세요."
+                  required
+                  aria-required="true"
+                  disabled={isLoading}
+                />
               </div>
-              <input
-                type="text"
-                id="username"
-                name="username"
-                value={formData.username}
-                onChange={handleChange}
-                className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:ring-0 focus:border-0 transition-colors font-pretendard"
-                placeholder="아이디를 입력하세요."
-                required
-                aria-required="true"
-              />
+
+              {/* 사용자명 유효성 검사 결과 */}
+              <div className="grid grid-cols-2 gap-2 text-xs">
+                <div
+                  className={`flex items-center space-x-2 ${
+                    usernameValidation.length
+                      ? "text-[#5AA60E]"
+                      : "text-gray-500"
+                  }`}
+                >
+                  {usernameValidation.length ? (
+                    <FaCheck className="text-[#5AA60E]" />
+                  ) : (
+                    <FaTimes className="text-gray-400" />
+                  )}
+                  <span>
+                    {VALIDATION_RULES.USERNAME.MIN_LENGTH}~
+                    {VALIDATION_RULES.USERNAME.MAX_LENGTH}자
+                  </span>
+                </div>
+                <div
+                  className={`flex items-center space-x-2 ${
+                    usernameValidation.pattern
+                      ? "text-[#5AA60E]"
+                      : "text-gray-500"
+                  }`}
+                >
+                  {usernameValidation.pattern ? (
+                    <FaCheck className="text-[#5AA60E]" />
+                  ) : (
+                    <FaTimes className="text-gray-400" />
+                  )}
+                  <span>영문, 숫자, _만 사용</span>
+                </div>
+              </div>
+
+              {/* 사용자명 중복 확인 결과 */}
+              {usernameCheck.message && (
+                <div
+                  className={`flex items-center space-x-2 text-sm ${
+                    usernameCheck.isAvailable === true
+                      ? "text-[#5AA60E]"
+                      : usernameCheck.isAvailable === false
+                      ? "text-red-600"
+                      : "text-gray-600"
+                  }`}
+                >
+                  {usernameCheck.isAvailable === true ? (
+                    <FaCheck className="text-[#5AA60E]" />
+                  ) : usernameCheck.isAvailable === false ? (
+                    <FaTimes className="text-red-600" />
+                  ) : null}
+                  <span>{usernameCheck.message}</span>
+                </div>
+              )}
             </div>
           </div>
 
@@ -196,21 +514,84 @@ export default function RegisterForm() {
             >
               비밀번호 <span className="text-red-500">*</span>
             </label>
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <FaLock color="#989AAA" />
+            <div className="space-y-2">
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <FaLock color="#989AAA" />
+                </div>
+                <input
+                  type="password"
+                  id="password"
+                  name="password"
+                  value={formData.password}
+                  onChange={handleChange}
+                  className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:ring-0 focus:border-0 transition-colors font-pretendard"
+                  placeholder={`${VALIDATION_RULES.PASSWORD.MIN_LENGTH}자 이상, 소문자, 숫자, 특수문자 포함`}
+                  required
+                  aria-required="true"
+                  disabled={isLoading}
+                />
               </div>
-              <input
-                type="password"
-                id="password"
-                name="password"
-                value={formData.password}
-                onChange={handleChange}
-                className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:ring-0 focus:border-0 transition-colors font-pretendard"
-                placeholder="영문, 특수문자 사용하여 6자 이상 입력하세요."
-                required
-                aria-required="true"
-              />
+
+              {/* 비밀번호 유효성 검사 결과 */}
+              <div className="grid grid-cols-2 gap-2 text-xs">
+                <div
+                  className={`flex items-center space-x-2 ${
+                    passwordValidation.length
+                      ? "text-[#5AA60E]"
+                      : "text-gray-500"
+                  }`}
+                >
+                  {passwordValidation.length ? (
+                    <FaCheck className="text-[#5AA60E]" />
+                  ) : (
+                    <FaTimes className="text-gray-400" />
+                  )}
+                  <span>{VALIDATION_RULES.PASSWORD.MIN_LENGTH}자 이상</span>
+                </div>
+                <div
+                  className={`flex items-center space-x-2 ${
+                    passwordValidation.lowercase
+                      ? "text-[#5AA60E]"
+                      : "text-gray-500"
+                  }`}
+                >
+                  {passwordValidation.lowercase ? (
+                    <FaCheck className="text-[#5AA60E]" />
+                  ) : (
+                    <FaTimes className="text-gray-400" />
+                  )}
+                  <span>소문자 포함</span>
+                </div>
+                <div
+                  className={`flex items-center space-x-2 ${
+                    passwordValidation.number
+                      ? "text-[#5AA60E]"
+                      : "text-gray-500"
+                  }`}
+                >
+                  {passwordValidation.number ? (
+                    <FaCheck className="text-[#5AA60E]" />
+                  ) : (
+                    <FaTimes className="text-gray-400" />
+                  )}
+                  <span>숫자 포함</span>
+                </div>
+                <div
+                  className={`flex items-center space-x-2 ${
+                    passwordValidation.special
+                      ? "text-[#5AA60E]"
+                      : "text-gray-500"
+                  }`}
+                >
+                  {passwordValidation.special ? (
+                    <FaCheck className="text-[#5AA60E]" />
+                  ) : (
+                    <FaTimes className="text-gray-400" />
+                  )}
+                  <span>특수문자 포함</span>
+                </div>
+              </div>
             </div>
           </div>
 
@@ -236,8 +617,31 @@ export default function RegisterForm() {
                 placeholder="비밀번호를 다시 입력하세요."
                 required
                 aria-required="true"
+                disabled={isLoading}
               />
             </div>
+
+            {/* 비밀번호 일치 여부 표시 */}
+            {formData.confirmPassword && (
+              <div
+                className={`flex items-center space-x-2 text-sm mt-2 ${
+                  formData.password === formData.confirmPassword
+                    ? "text-[#5AA60E]"
+                    : "text-red-600"
+                }`}
+              >
+                {formData.password === formData.confirmPassword ? (
+                  <FaCheck className="text-[#5AA60E]" />
+                ) : (
+                  <FaTimes className="text-red-600" />
+                )}
+                <span>
+                  {formData.password === formData.confirmPassword
+                    ? "비밀번호가 일치합니다."
+                    : "비밀번호가 일치하지 않습니다."}
+                </span>
+              </div>
+            )}
           </div>
 
           {/* Email Field */}
@@ -260,7 +664,7 @@ export default function RegisterForm() {
                     name="email"
                     value={formData.email}
                     onChange={handleChange}
-                    disabled={emailVerification.isVerified}
+                    disabled={emailVerification.isVerified || isLoading}
                     className={`block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:ring-0 focus:border-0 transition-colors font-pretendard ${
                       emailVerification.isVerified
                         ? "bg-gray-100 text-gray-500 cursor-not-allowed"
@@ -278,7 +682,9 @@ export default function RegisterForm() {
                   radius="xl"
                   onClick={handleSendVerificationCode}
                   disabled={
-                    emailVerification.isVerified || emailVerification.isLoading
+                    emailVerification.isVerified ||
+                    emailVerification.isLoading ||
+                    isLoading
                   }
                   className="whitespace-nowrap"
                 >
@@ -306,6 +712,7 @@ export default function RegisterForm() {
                       className="block w-full px-3 py-3 border border-gray-300 rounded-lg focus:ring-0 focus:border-0 transition-colors font-pretendard"
                       placeholder="인증 코드 6자리를 입력하세요"
                       maxLength={6}
+                      disabled={isLoading}
                     />
                   </div>
                   <Button
@@ -314,7 +721,7 @@ export default function RegisterForm() {
                     size="sm"
                     radius="xl"
                     onClick={handleVerifyCode}
-                    disabled={emailVerification.isLoading}
+                    disabled={emailVerification.isLoading || isLoading}
                     className="whitespace-nowrap"
                   >
                     {emailVerification.isLoading ? "확인중..." : "코드 확인"}
@@ -340,21 +747,65 @@ export default function RegisterForm() {
             >
               닉네임 <span className="text-red-500">*</span>
             </label>
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <FaUser color="#989AAA" />
+            <div className="space-y-2">
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <FaUser color="#989AAA" />
+                </div>
+                <input
+                  type="text"
+                  id="nickname"
+                  name="nickname"
+                  value={formData.nickname}
+                  onChange={handleChange}
+                  className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:ring-0 focus:border-0 transition-colors font-pretendard"
+                  placeholder="나만의 닉네임을 만들어보세요."
+                  required
+                  aria-required="true"
+                  disabled={isLoading}
+                />
               </div>
-              <input
-                type="text"
-                id="nickname"
-                name="nickname"
-                value={formData.nickname}
-                onChange={handleChange}
-                className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:ring-0 focus:border-0 transition-colors font-pretendard"
-                placeholder="나만의 닉네임을 만들어보세요."
-                required
-                aria-required="true"
-              />
+
+              {/* 닉네임 유효성 검사 결과 */}
+              <div className="text-xs">
+                <div
+                  className={`flex items-center space-x-2 ${
+                    nicknameValidation.length
+                      ? "text-[#5AA60E]"
+                      : "text-gray-500"
+                  }`}
+                >
+                  {nicknameValidation.length ? (
+                    <FaCheck className="text-[#5AA60E]" />
+                  ) : (
+                    <FaTimes className="text-gray-400" />
+                  )}
+                  <span>
+                    {VALIDATION_RULES.NICKNAME.MIN_LENGTH}~
+                    {VALIDATION_RULES.NICKNAME.MAX_LENGTH}자
+                  </span>
+                </div>
+              </div>
+
+              {/* 닉네임 중복 확인 결과 */}
+              {nicknameCheck.message && (
+                <div
+                  className={`flex items-center space-x-2 text-sm ${
+                    nicknameCheck.isAvailable === true
+                      ? "text-[#5AA60E]"
+                      : nicknameCheck.isAvailable === false
+                      ? "text-red-600"
+                      : "text-gray-600"
+                  }`}
+                >
+                  {nicknameCheck.isAvailable === true ? (
+                    <FaCheck className="text-[#5AA60E]" />
+                  ) : nicknameCheck.isAvailable === false ? (
+                    <FaTimes className="text-red-600" />
+                  ) : null}
+                  <span>{nicknameCheck.message}</span>
+                </div>
+              )}
             </div>
           </div>
         </fieldset>
@@ -372,6 +823,7 @@ export default function RegisterForm() {
                 className="mt-1 h-4 w-4 text-[#5AA60E] border-gray-300 rounded focus:ring-[#5AA60E] focus:ring-2"
                 required
                 aria-required="true"
+                disabled={isLoading}
               />
               <div className="flex-1">
                 <span className="text-sm text-gray-700 font-pretendard">
@@ -395,6 +847,7 @@ export default function RegisterForm() {
                 className="mt-1 h-4 w-4 text-[#5AA60E] border-gray-300 rounded focus:ring-[#5AA60E] focus:ring-2"
                 required
                 aria-required="true"
+                disabled={isLoading}
               />
               <div className="flex-1">
                 <span className="text-sm text-gray-700 font-pretendard">
@@ -417,6 +870,7 @@ export default function RegisterForm() {
                 checked={agreements.marketing}
                 onChange={() => handleAgreementChange("marketing")}
                 className="mt-1 h-4 w-4 text-[#5AA60E] border-gray-300 rounded focus:ring-[#5AA60E] focus:ring-2"
+                disabled={isLoading}
               />
               <div className="flex-1">
                 <span className="text-sm text-gray-700 font-pretendard">
@@ -436,9 +890,9 @@ export default function RegisterForm() {
       </main>
 
       {/* Error Message */}
-      {error && (
+      {displayError && (
         <div className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg p-3 font-pretendard">
-          {error}
+          {displayError}
         </div>
       )}
 
@@ -450,7 +904,16 @@ export default function RegisterForm() {
           size="md"
           radius="lg"
           className="w-full py-3"
-          disabled={isLoading || !emailVerification.isVerified}
+          disabled={
+            isLoading ||
+            !emailVerification.isVerified ||
+            usernameCheck.isAvailable !== true ||
+            nicknameCheck.isAvailable !== true ||
+            !Object.values(passwordValidation).every(Boolean) ||
+            !usernameValidation.length ||
+            !usernameValidation.pattern ||
+            !nicknameValidation.length
+          }
           aria-label="회원가입하기"
         >
           {isLoading ? (
