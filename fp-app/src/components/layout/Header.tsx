@@ -3,12 +3,14 @@
 import { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useAppSelector } from "@/lib/redux/hooks";
 
 export default function Header() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
+  const pathname = usePathname();
 
   // Redux 상태에서 인증 정보 가져오기
   const { isAuthenticated, user } = useAppSelector((state) => state.auth);
@@ -54,7 +56,7 @@ export default function Header() {
   // 네비게이션 아이템을 동적으로 생성
   const getNavItems = () => {
     const baseItems = [
-      { label: "야구 입덕 가이드", href: "/guide" },
+      { label: "야구 입덕 가이드", href: "/tutorial" },
       { label: "야구사전", href: "/dictionary" },
       { label: "야구퀴즈", href: "/quiz" },
       { label: "구장별 팁", href: "/stadiums" },
@@ -78,6 +80,14 @@ export default function Header() {
   };
 
   const NAV_ITEMS = getNavItems();
+
+  // 현재 경로가 메뉴 항목과 일치하는지 확인하는 함수
+  const isActiveLink = (href: string) => {
+    if (href === "/") {
+      return pathname === "/";
+    }
+    return pathname.startsWith(href);
+  };
 
   // 서버 사이드 렌더링 시 기본 상태로 렌더링
   if (!isMounted) {
@@ -124,10 +134,20 @@ export default function Header() {
                   <Link
                     key={index}
                     href={item.href}
-                    className="text-gray-900 hover:text-[#5aa60e] hover:font-semibold transition-all relative font-pretendard group text-2xl font-medium"
+                    className={`transition-all relative font-pretendard group text-xl font-medium ${
+                      isActiveLink(item.href)
+                        ? "text-[#5aa60e] font-semibold"
+                        : "text-gray-900 hover:text-[#5aa60e] hover:font-semibold"
+                    }`}
                   >
                     {item.label}
-                    <div className="absolute bottom-0 left-0 w-full h-0.5 bg-[#5aa60e] opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                    <div
+                      className={`absolute bottom-0 left-0 w-full h-0.5 bg-[#5aa60e] transition-opacity ${
+                        isActiveLink(item.href)
+                          ? "opacity-100"
+                          : "opacity-0 group-hover:opacity-100"
+                      }`}
+                    ></div>
                   </Link>
                 ))}
               </div>
@@ -198,10 +218,20 @@ export default function Header() {
                 <Link
                   key={index}
                   href={item.href}
-                  className="text-gray-900 hover:text-[#5aa60e] hover:font-semibold transition-all relative font-pretendard group text-2xl font-medium"
+                  className={`transition-all relative font-pretendard group text-2xl font-medium ${
+                    isActiveLink(item.href)
+                      ? "text-[#5aa60e] font-semibold"
+                      : "text-gray-900 hover:text-[#5aa60e] hover:font-semibold"
+                  }`}
                 >
                   {item.label}
-                  <div className="absolute bottom-0 left-0 w-full h-0.5 bg-[#5aa60e] opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                  <div
+                    className={`absolute bottom-0 left-0 w-full h-0.5 bg-[#5aa60e] transition-opacity ${
+                      isActiveLink(item.href)
+                        ? "opacity-100"
+                        : "opacity-0 group-hover:opacity-100"
+                    }`}
+                  ></div>
                 </Link>
               ))}
             </div>
@@ -262,11 +292,21 @@ export default function Header() {
                 <Link
                   key={index}
                   href={item.href}
-                  className="text-gray-900 hover:text-[#5aa60e] hover:font-semibold transition-all py-4 px-6 border-b border-gray-100 active:bg-gray-50 font-pretendard relative group text-lg font-medium"
+                  className={`transition-all py-4 px-6 border-b border-gray-100 active:bg-gray-50 font-pretendard relative group text-lg font-medium ${
+                    isActiveLink(item.href)
+                      ? "text-[#5aa60e] font-semibold"
+                      : "text-gray-900 hover:text-[#5aa60e] hover:font-semibold"
+                  }`}
                   onClick={closeMobileMenu}
                 >
                   {item.label}
-                  <div className="absolute bottom-0 left-0 w-full h-0.5 bg-[#5aa60e] opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                  <div
+                    className={`absolute bottom-0 left-0 w-full h-0.5 bg-[#5aa60e] transition-opacity ${
+                      isActiveLink(item.href)
+                        ? "opacity-100"
+                        : "opacity-0 group-hover:opacity-100"
+                    }`}
+                  ></div>
                 </Link>
               ))}
             </nav>
