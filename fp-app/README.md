@@ -1,36 +1,68 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# FirstPitch Frontend
 
-## Getting Started
+야구 사전 프론트엔드 애플리케이션입니다.
 
-First, run the development server:
+## 환경 설정
+
+### 1. 환경변수 파일 생성
+
+프로젝트 루트에 `.env.local` 파일을 생성하고 다음 내용을 입력하세요:
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+# 개발 환경
+NEXT_PUBLIC_API_URL=http://localhost:3001
+
+# 프로덕션 환경 (예시)
+# NEXT_PUBLIC_API_URL=https://api.firstpitch.com
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### 2. 환경변수 설명
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+- `NEXT_PUBLIC_API_URL`: 백엔드 API 서버의 기본 URL
+  - 개발: `http://localhost:3001`
+  - 프로덕션: 실제 배포된 API 서버 URL
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## 설치 및 실행
 
-## Learn More
+```bash
+# 의존성 설치
+npm install
 
-To learn more about Next.js, take a look at the following resources:
+# 개발 서버 실행
+npm run dev
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+# 프로덕션 빌드
+npm run build
+npm run start
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## 기술 스택
 
-## Deploy on Vercel
+- **Framework**: Next.js 14
+- **Styling**: Tailwind CSS v4
+- **State Management**: Redux Toolkit
+- **Authentication**: JWT + HTTP-only Cookies
+- **UI Components**: Custom Components + Tailwind
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## 주요 기능
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- 사용자 인증 (회원가입/로그인)
+- 야구 사전
+- 야구 퀴즈
+- 야구장 정보
+- 튜토리얼
+- 사용자 프로필 관리
+
+## 개발 가이드
+
+### API 호출
+- `src/lib/api/` 디렉토리에 API 함수들이 정의되어 있습니다
+- `src/lib/utils/constants.ts`에 API 엔드포인트가 정의되어 있습니다
+
+### 상태 관리
+- Redux Toolkit을 사용하여 전역 상태를 관리합니다
+- `src/lib/redux/` 디렉토리에 스토어와 슬라이스가 정의되어 있습니다
+
+### 스타일링
+- Tailwind CSS를 사용하여 반응형 디자인을 구현합니다
+- `src/app/globals.css`에 커스텀 색상 팔레트가 정의되어 있습니다

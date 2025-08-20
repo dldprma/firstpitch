@@ -103,7 +103,10 @@ export default function RootLayout({
         <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
         <link rel="manifest" href="/site.webmanifest" />
       </head>
-      <body className="antialiased font-pretendard">
+      <body
+        className="antialiased font-pretendard"
+        suppressHydrationWarning={true}
+      >
         <Providers>{children}</Providers>
       </body>
     </html>

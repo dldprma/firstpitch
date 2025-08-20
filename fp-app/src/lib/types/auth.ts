@@ -4,6 +4,9 @@ export interface User {
   username: string; // 사용자명 (로그인용)
   email: string; // 이메일
   nickname: string; // 닉네임
+  agreeToTerms: boolean; // 이용약관 동의
+  agreeToPrivacy: boolean; // 개인정보처리방침 동의
+  agreeToMarketing: boolean; // 마케팅 정보 수신 동의
   createdAt: string; // 생성일
   updatedAt: string; // 수정일
 }
@@ -25,18 +28,19 @@ export interface LoginResponse {
 export interface RegisterRequest {
   username: string;
   password: string;
+  confirmPassword: string;
   email: string;
   nickname: string;
-  agreeToTerms: boolean;
-  agreeToPrivacy: boolean;
-  agreeToMarketing: boolean;
+  emailVerificationCode: string;
+  agreeToTerms: boolean; // 필수: 이용약관
+  agreeToPrivacy: boolean; // 필수: 개인정보처리방침
+  agreeToMarketing?: boolean; // 선택: 마케팅 정보 수신
 }
 
 // 회원가입 응답 타입
 export interface RegisterResponse {
+  message: string;
   user: User;
-  accessToken: string;
-  refreshToken: string;
 }
 
 // 토큰 갱신 요청 타입

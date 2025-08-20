@@ -54,7 +54,7 @@ export const useAuth = () => {
     const result = await dispatch(registerUser(userData));
 
     if (registerUser.fulfilled.match(result)) {
-      router.push("/"); // 홈으로 리다이렉트
+      // 자동 리다이렉트 제거 - Alert 확인 버튼 클릭 시에만 이동
       return { success: true };
     } else {
       return { success: false, error: result.payload as string };
@@ -74,7 +74,14 @@ export const useAuth = () => {
 
   // 토큰 갱신
   const handleRefreshToken = async () => {
-    return await dispatch(refreshUserToken());
+    try {
+      return await dispatch(refreshUserToken());
+    } catch (error) {
+      if (error instanceof Error && error.message === "TOKEN_EXPIRED") {
+        router.push("/auth/login");
+      }
+      throw error;
+    }
   };
 
   // 토큰 검증

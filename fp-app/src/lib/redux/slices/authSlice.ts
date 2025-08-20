@@ -171,9 +171,9 @@ const authSlice = createSlice({
       })
       .addCase(registerUser.fulfilled, (state, action) => {
         state.isLoading = false;
-        state.isAuthenticated = true;
-        state.user = action.payload.user;
-        state.accessToken = action.payload.accessToken;
+        state.isAuthenticated = false; // 회원가입 후에는 로그인 상태가 아님
+        state.user = null; // 회원가입 후에는 사용자 정보를 저장하지 않음
+        state.accessToken = null; // 회원가입 후에는 토큰을 저장하지 않음
         state.error = null;
       })
       .addCase(registerUser.rejected, (state, action) => {

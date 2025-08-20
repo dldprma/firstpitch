@@ -13,6 +13,9 @@ const nextConfig: NextConfig = {
       fullUrl: false,
     },
   },
+  // SSR hydration 오류 방지
+  reactStrictMode: true,
+  swcMinify: true,
 };
 
 export default nextConfig;

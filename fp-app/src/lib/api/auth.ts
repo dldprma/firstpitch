@@ -20,7 +20,10 @@ export const login = async (
 ): Promise<ApiResponse<LoginResponse>> => {
   try {
     const response = await apiClient.post(AUTH_ENDPOINTS.LOGIN, credentials);
-    return response.data as ApiResponse<LoginResponse>;
+    return {
+      success: true,
+      data: response.data,
+    };
   } catch (error: unknown) {
     if (
       error &&
@@ -30,7 +33,11 @@ export const login = async (
       typeof error.response === "object" &&
       "data" in error.response
     ) {
-      return error.response.data as ApiResponse<LoginResponse>;
+      const errorData = error.response.data as any;
+      return {
+        success: false,
+        error: errorData.message || AUTH_ERROR_MESSAGES.NETWORK_ERROR,
+      };
     }
     return {
       success: false,
@@ -45,7 +52,10 @@ export const register = async (
 ): Promise<ApiResponse<RegisterResponse>> => {
   try {
     const response = await apiClient.post(AUTH_ENDPOINTS.REGISTER, userData);
-    return response.data as ApiResponse<RegisterResponse>;
+    return {
+      success: true,
+      data: response.data,
+    };
   } catch (error: unknown) {
     if (
       error &&
@@ -55,7 +65,11 @@ export const register = async (
       typeof error.response === "object" &&
       "data" in error.response
     ) {
-      return error.response.data as ApiResponse<RegisterResponse>;
+      const errorData = error.response.data as any;
+      return {
+        success: false,
+        error: errorData.message || AUTH_ERROR_MESSAGES.NETWORK_ERROR,
+      };
     }
     return {
       success: false,
@@ -145,7 +159,11 @@ export const sendVerificationCode = async (
     const response = await apiClient.post(AUTH_ENDPOINTS.SEND_VERIFICATION, {
       email,
     });
-    return response.data as ApiResponse<{ message: string }>;
+    // 백엔드 응답 형식에 맞춤: { message: '...' }
+    return {
+      success: true,
+      data: { message: response.data.message },
+    };
   } catch (error: unknown) {
     if (
       error &&
@@ -155,7 +173,11 @@ export const sendVerificationCode = async (
       typeof error.response === "object" &&
       "data" in error.response
     ) {
-      return error.response.data as ApiResponse<{ message: string }>;
+      const errorData = error.response.data as any;
+      return {
+        success: false,
+        error: errorData.message || AUTH_ERROR_MESSAGES.NETWORK_ERROR,
+      };
     }
     return {
       success: false,
@@ -174,7 +196,11 @@ export const verifyEmailCode = async (
       email,
       code,
     });
-    return response.data as ApiResponse<{ message: string }>;
+    // 백엔드 응답 형식에 맞춤: { message: '...' }
+    return {
+      success: true,
+      data: { message: response.data.message },
+    };
   } catch (error: unknown) {
     if (
       error &&
@@ -184,7 +210,11 @@ export const verifyEmailCode = async (
       typeof error.response === "object" &&
       "data" in error.response
     ) {
-      return error.response.data as ApiResponse<{ message: string }>;
+      const errorData = error.response.data as any;
+      return {
+        success: false,
+        error: errorData.message || AUTH_ERROR_MESSAGES.NETWORK_ERROR,
+      };
     }
     return {
       success: false,
@@ -201,7 +231,10 @@ export const checkUsername = async (
     const response = await apiClient.post(AUTH_ENDPOINTS.CHECK_USERNAME, {
       username,
     });
-    return response.data as ApiResponse<{ available: boolean }>;
+    return {
+      success: true,
+      data: response.data,
+    };
   } catch (error: unknown) {
     if (
       error &&
@@ -211,7 +244,11 @@ export const checkUsername = async (
       typeof error.response === "object" &&
       "data" in error.response
     ) {
-      return error.response.data as ApiResponse<{ available: boolean }>;
+      const errorData = error.response.data as any;
+      return {
+        success: false,
+        error: errorData.message || AUTH_ERROR_MESSAGES.NETWORK_ERROR,
+      };
     }
     return {
       success: false,
@@ -228,7 +265,10 @@ export const checkEmail = async (
     const response = await apiClient.post(AUTH_ENDPOINTS.CHECK_EMAIL, {
       email,
     });
-    return response.data as ApiResponse<{ available: boolean }>;
+    return {
+      success: true,
+      data: response.data,
+    };
   } catch (error: unknown) {
     if (
       error &&
@@ -238,7 +278,11 @@ export const checkEmail = async (
       typeof error.response === "object" &&
       "data" in error.response
     ) {
-      return error.response.data as ApiResponse<{ available: boolean }>;
+      const errorData = error.response.data as any;
+      return {
+        success: false,
+        error: errorData.message || AUTH_ERROR_MESSAGES.NETWORK_ERROR,
+      };
     }
     return {
       success: false,

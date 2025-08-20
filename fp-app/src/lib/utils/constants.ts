@@ -4,11 +4,11 @@ export const AUTH_ENDPOINTS = {
   REGISTER: "/api/auth/register",
   LOGOUT: "/api/auth/logout",
   REFRESH: "/api/auth/refresh",
-  VERIFY: "/api/auth/verify",
+  PROFILE: "/api/auth/profile",
   SEND_VERIFICATION: "/api/auth/send-verification",
   VERIFY_EMAIL: "/api/auth/verify-email",
-  CHECK_USERNAME: "/api/auth/check-username",
-  CHECK_EMAIL: "/api/auth/check-email",
+  CHECK_USERNAME: "/api/users/check-username",
+  CHECK_EMAIL: "/api/users/check-email",
 } as const;
 
 // 토큰 관련 상수
@@ -57,23 +57,27 @@ export const AUTH_SUCCESS_MESSAGES = {
   PASSWORD_CHANGED: "비밀번호가 변경되었습니다.",
 } as const;
 
-// 유효성 검사 규칙
+// 유효성 검사 규칙 (백엔드와 동일)
 export const VALIDATION_RULES = {
   USERNAME: {
-    MIN_LENGTH: 3,
-    MAX_LENGTH: 10,
-    PATTERN: /^[a-zA-Z0-9_]+$/,
+    MIN_LENGTH: 4,
+    MAX_LENGTH: 20,
+    PATTERN: /^[a-z0-9_]+$/, // 소문자+숫자+언더바만
   },
   PASSWORD: {
     MIN_LENGTH: 8,
-    MAX_LENGTH: 20,
-    PATTERN: /^(?=.*[a-z])(?=.*[0-9])(?=.*[!@#$%^&*])/,
+    MAX_LENGTH: 100,
+    PATTERN: /^(?=.*[a-z])(?=.*\d)(?=.*[@$!%*?&])[a-z\d@$!%*?&]+$/, // 소문자+숫자+특수문자
   },
   EMAIL: {
     PATTERN: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
   },
   NICKNAME: {
     MIN_LENGTH: 2,
-    MAX_LENGTH: 10,
+    MAX_LENGTH: 20,
+  },
+  EMAIL_VERIFICATION_CODE: {
+    LENGTH: 6,
+    PATTERN: /^[0-9]{6}$/,
   },
 } as const;
