@@ -56,13 +56,22 @@ apiClient.interceptors.response.use(
 
         if (refreshToken) {
           const refreshResponse = await axios.post(
-            `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001"}/api/auth/refresh`,
+            `${
+              process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001"
+            }/api/auth/refresh`,
             { refreshToken }
           );
 
-          if (refreshResponse.data && typeof refreshResponse.data === 'object' && 'success' in refreshResponse.data) {
-            const responseData = refreshResponse.data as { success: boolean; data?: { accessToken: string } };
-            
+          if (
+            refreshResponse.data &&
+            typeof refreshResponse.data === "object" &&
+            "success" in refreshResponse.data
+          ) {
+            const responseData = refreshResponse.data as {
+              success: boolean;
+              data?: { accessToken: string };
+            };
+
             if (responseData.success && responseData.data?.accessToken) {
               const { accessToken } = responseData.data;
 
@@ -79,7 +88,8 @@ apiClient.interceptors.response.use(
         // 토큰 갱신 실패 시 로그아웃
         localStorage.removeItem("accessToken");
         if (typeof window !== "undefined") {
-          window.location.href = "/auth/login";
+          // 토큰이 만료되었으므로 에러를 던져서 컴포넌트에서 처리하도록 함
+          throw new Error("TOKEN_EXPIRED");
         }
       }
     }

@@ -5,6 +5,8 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useAppSelector } from "@/lib/redux/hooks";
+import { useAuth } from "@/lib/hooks/useAuth";
+import { IoLogOutOutline } from "react-icons/io5";
 
 export default function Header() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -14,6 +16,7 @@ export default function Header() {
 
   // Redux 상태에서 인증 정보 가져오기
   const { isAuthenticated, user } = useAppSelector((state) => state.auth);
+  const { logout } = useAuth();
 
   // 컴포넌트 마운트 후에만 클라이언트 사이드 로직 실행
   useEffect(() => {
@@ -65,10 +68,7 @@ export default function Header() {
 
     // 로그인 상태에 따라 마지막 항목 변경
     if (isAuthenticated && user) {
-      baseItems.push(
-        { label: "마이페이지", href: "/user/mypage" },
-        { label: "로그아웃", href: "/auth/logout" }
-      );
+      baseItems.push({ label: "마이페이지", href: "/user/mypage" });
     } else {
       baseItems.push(
         { label: "로그인", href: "/auth/login" },
@@ -234,6 +234,17 @@ export default function Header() {
                   ></div>
                 </Link>
               ))}
+
+              {/* 로그아웃 버튼 */}
+              {isAuthenticated && user && (
+                <button
+                  onClick={logout}
+                  className="flex items-center space-x-2 px-3 py-2 text-red-600 hover:text-red-700 font-semibold text-xl font-pretendard transition-colors duration-200 cursor-pointer hover:bg-red-50 rounded-md"
+                >
+                  <IoLogOutOutline size={24} />
+                  <span className="hidden sm:inline">로그아웃</span>
+                </button>
+              )}
             </div>
           </nav>
 
@@ -309,6 +320,20 @@ export default function Header() {
                   ></div>
                 </Link>
               ))}
+
+              {/* 모바일 로그아웃 버튼 */}
+              {isAuthenticated && user && (
+                <button
+                  onClick={() => {
+                    logout();
+                    closeMobileMenu();
+                  }}
+                  className="flex items-center space-x-3 py-4 px-6 text-gray-600 hover:text-red-600 font-semibold text-lg font-pretendard transition-colors duration-200 cursor-pointer hover:bg-gray-50 w-full text-left border-b border-gray-100 last:border-b-0"
+                >
+                  <IoLogOutOutline size={20} />
+                  <span>로그아웃</span>
+                </button>
+              )}
             </nav>
           </div>
         )}
